@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  ChangeEvent,
-  MouseEvent,
-} from "react";
+import { useEffect, useRef, useState, ChangeEvent, MouseEvent } from "react";
 import "./App.css";
 
 function App() {
@@ -140,6 +134,7 @@ function App() {
         const y = e.clientY - rect.top;
         const color = getAverageColor(ctx, x, y, 20);
         setAverageColor(color);
+        console.log(averageColor);
       }
     }
   };
