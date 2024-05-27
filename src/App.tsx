@@ -1,39 +1,52 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  ChangeEvent,
+  MouseEvent,
+} from "react";
 import "./App.css";
 
 function App() {
-  const canvasRef = useRef(null);
-  const imgRef = useRef(null);
-  const [file, setFile] = useState(null);
-  const [pixelColor, setPixelColor] = useState("");
-  const [averageColor, setAverageColor] = useState("");
-  const [dominantColor, setDominantColor] = useState("");
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [file, setFile] = useState<string | null>(null);
+  const [pixelColor, setPixelColor] = useState<string>("");
+  const [averageColor, setAverageColor] = useState<string>("");
+  const [dominantColor, setDominantColor] = useState<string>("");
 
-  const isWhitish = (r, g, b) => {
+  const isWhitish = (r: number, g: number, b: number) => {
     const threshold = 200; // Consider colors with RGB values greater than this as whitish
     return r > threshold && g > threshold && b > threshold;
   };
 
-  const calculateDominantColor = (ctx, width, height) => {
-    const colorCount = {};
+  const calculateDominantColor = (
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number
+  ) => {
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    const colorCount: Record<string, number> = {};
     let maxCount = 0;
     let dominantColor = "";
 
-    for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y++) {
-        const pixel = ctx.getImageData(x, y, 1, 1).data;
-        if (!isWhitish(pixel[0], pixel[1], pixel[2])) {
-          const color = `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
-          if (colorCount[color]) {
-            colorCount[color]++;
-          } else {
-            colorCount[color] = 1;
-          }
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const alpha = data[i + 3];
+      if (alpha > 0 && !isWhitish(r, g, b)) {
+        const color = `rgb(${r},${g},${b})`;
+        if (colorCount[color]) {
+          colorCount[color]++;
+        } else {
+          colorCount[color] = 1;
+        }
 
-          if (colorCount[color] > maxCount) {
-            maxCount = colorCount[color];
-            dominantColor = color;
-          }
+        if (colorCount[color] > maxCount) {
+          maxCount = colorCount[color];
+          dominantColor = color;
         }
       }
     }
@@ -46,37 +59,55 @@ function App() {
     if (file) {
       const img = imgRef.current;
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-
-      img.onload = () => {
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        ctx.drawImage(img, 0, 0);
-        calculateDominantColor(ctx, img.naturalWidth, img.naturalHeight);
-      };
+      if (img && canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          img.onload = () => {
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            ctx.drawImage(img, 0, 0);
+            calculateDominantColor(ctx, img.naturalWidth, img.naturalHeight);
+          };
+        }
+      }
     }
   }, [file]);
 
-  const handleChange = (e) => {
-    setFile(URL.createObjectURL(e.target.files[0]));
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(URL.createObjectURL(e.target.files[0]));
+    }
   };
 
-  const getPixelColor = (ctx, x, y) => {
+  const getPixelColor = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number
+  ) => {
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     return `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const color = getPixelColor(ctx, x, y);
-    setPixelColor(color);
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const color = getPixelColor(ctx, x, y);
+        setPixelColor(color);
+      }
+    }
   };
 
-  const getAverageColor = (ctx, x, y, inset) => {
+  const getAverageColor = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    inset: number
+  ) => {
     let reds = 0,
       greens = 0,
       blues = 0;
@@ -99,18 +130,23 @@ function App() {
     return `rgb(${red}, ${green}, ${blue})`;
   };
 
-  const handleClick = (e) => {
+  const handleClick = (e: MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const color = getAverageColor(ctx, x, y, 20);
-    setAverageColor(color);
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const color = getAverageColor(ctx, x, y, 20);
+        setAverageColor(color);
+      }
+    }
   };
 
   return (
     <>
+      <h1>Color picker</h1>
       <h2>{file ? "Your Image:" : "Add image:"}</h2>
       <input type="file" onChange={handleChange} />
       {file && (
