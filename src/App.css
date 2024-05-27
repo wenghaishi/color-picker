@@ -5,6 +5,24 @@
   text-align: center;
 }
 
+.color-display-container {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.color-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.color-box {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 10px;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
